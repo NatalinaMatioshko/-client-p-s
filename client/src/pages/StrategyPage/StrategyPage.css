@@ -1,0 +1,98 @@
+.strategy-page {
+  padding-block: 24px 48px;
+  text-align: left;
+}
+
+.strategy-page--centered {
+  min-height: 50vh;
+  display: grid;
+  align-items: center;
+}
+
+.strategy-page__back {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.strategy-page__back:hover {
+  text-decoration: underline;
+}
+
+.strategy-page__header {
+  margin-bottom: 20px;
+}
+
+.strategy-page__city {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  margin-bottom: 6px;
+}
+
+.strategy-page__title {
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+
+.strategy-page__vision {
+  max-width: 75ch;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.strategy-page__docs {
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.strategy-page__docs-title {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.strategy-page__docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.strategy-page__description {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.strategy-page__operational-goal {
+  margin-top: 10px;
+}
+
+.strategy-page__task {
+  margin-top: 8px;
+}
+
+.strategy-page__unit {
+  font-size: 14px;
+  margin-bottom: 8px;
+  max-width: 75ch;
+}
+
+.strategy-page__period {
+  margin-top: 8px;
+}
+
+.strategy-page__task-description {
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.strategy-page__error {
+  color: #b91c1c;
+  margin-bottom: 16px;
+}
