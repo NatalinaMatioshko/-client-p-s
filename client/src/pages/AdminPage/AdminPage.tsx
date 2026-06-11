@@ -1,405 +1,533 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Container } from '../../components/layout/Container'
-import './AdminPage.css'
+import { useState, useEffect, useMemo } from "react";
+import { Container } from "../../components/layout/Container";
+import "./AdminPage.css";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:5257'
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
+  "http://localhost:5257";
+
+type ActiveType = "Region" | "Community";
+type UrlFilter = "all" | "filled" | "empty";
+type StrategiesFilter = "all" | "yes" | "no";
+type ToastType = "success" | "error" | "info";
+
+interface Strategy {
+  id: string;
+  title?: string;
+  strategyUrl?: string | null;
+}
+
+interface UnitItem {
+  id: string;
+  name?: string;
+  nameFull?: string;
+  kattotgId?: string;
+  category?: string;
+  regionId?: string;
+  websiteUrl?: string | null;
+  strategiesUrl?: string | null;
+  strategies?: Strategy[];
+}
+
+interface ToastItem {
+  id: number;
+  message: string;
+  type: ToastType;
+}
 
 export function AdminPage() {
-  // App data state
-  const [regions, setRegions] = useState([])
-  const [communities, setCommunities] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [regions, setRegions] = useState<UnitItem[]>([]);
+  const [communities, setCommunities] = useState<UnitItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filtering state
-  const [activeType, setActiveType] = useState('Community') // 'Region', 'Community'
-  const [selectedRegionFilterId, setSelectedRegionFilterId] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [websiteUrlFilter, setWebsiteUrlFilter] = useState('all') // 'all', 'filled', 'empty'
-  const [strategiesUrlFilter, setStrategiesUrlFilter] = useState('all') // 'all', 'filled', 'empty'
-  const [hasStrategiesFilter, setHasStrategiesFilter] = useState('all') // 'all', 'yes', 'no'
+  const [activeType, setActiveType] = useState<ActiveType>("Community");
+  const [selectedRegionFilterId, setSelectedRegionFilterId] =
+    useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [websiteUrlFilter, setWebsiteUrlFilter] = useState<UrlFilter>("all");
+  const [strategiesUrlFilter, setStrategiesUrlFilter] =
+    useState<UrlFilter>("all");
+  const [hasStrategiesFilter, setHasStrategiesFilter] =
+    useState<StrategiesFilter>("all");
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 12
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 12;
 
-  // Editing state
-  const [selectedUnit, setSelectedUnit] = useState(null)
-  const [strategiesUrlInput, setStrategiesUrlInput] = useState('')
-  const [websiteUrlInput, setWebsiteUrlInput] = useState('')
-  const [strategiesUrlError, setStrategiesUrlError] = useState('')
-  const [websiteUrlError, setWebsiteUrlError] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [selectedUnit, setSelectedUnit] = useState<UnitItem | null>(null);
+  const [strategiesUrlInput, setStrategiesUrlInput] = useState<string>("");
+  const [websiteUrlInput, setWebsiteUrlInput] = useState<string>("");
+  const [strategiesUrlError, setStrategiesUrlError] = useState<string>("");
+  const [websiteUrlError, setWebsiteUrlError] = useState<string>("");
+  const [saving, setSaving] = useState<boolean>(false);
 
-  // Strategy editing state
-  const [editingStrategyId, setEditingStrategyId] = useState(null)
-  const [editStrategyTitle, setEditStrategyTitle] = useState('')
-  const [editStrategyUrl, setEditStrategyUrl] = useState('')
-  const [savingStrategyId, setSavingStrategyId] = useState(null)
+  const [editingStrategyId, setEditingStrategyId] = useState<string | null>(
+    null,
+  );
+  const [editStrategyTitle, setEditStrategyTitle] = useState<string>("");
+  const [editStrategyUrl, setEditStrategyUrl] = useState<string>("");
+  const [savingStrategyId, setSavingStrategyId] = useState<string | null>(null);
 
-  // Toast notification state
-  const [toasts, setToasts] = useState([])
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  // Fetch initial regions and communities
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
 
     Promise.all([
       fetch(`${API_BASE_URL}/api/Regions`).then((r) => {
-        if (!r.ok) throw new Error('Не вдалося завантажити області')
-        return r.json()
+        if (!r.ok) throw new Error("Не вдалося завантажити області");
+        return r.json();
       }),
       fetch(`${API_BASE_URL}/api/Communities`).then((r) => {
-        if (!r.ok) throw new Error('Не вдалося завантажити громади')
-        return r.json()
+        if (!r.ok) throw new Error("Не вдалося завантажити громади");
+        return r.json();
       }),
     ])
       .then(([regionsData, communitiesData]) => {
         if (!cancelled) {
-          setRegions(regionsData || [])
-          setCommunities(communitiesData || [])
+          setRegions((regionsData ?? []) as UnitItem[]);
+          setCommunities((communitiesData ?? []) as UnitItem[]);
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err.message || 'Не вдалося завантажити довідкові дані.')
-          console.error(err)
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Не вдалося завантажити довідкові дані.";
+          setError(message);
+          console.error(err);
         }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
+        if (!cancelled) setLoading(false);
+      });
 
     return () => {
-      cancelled = true
-    }
-  }, [])
+      cancelled = true;
+    };
+  }, []);
 
-  // Show Toast helper
-  const showToast = (message, type = 'success') => {
-    const id = Date.now()
-    setToasts((prev) => [...prev, { id, message, type }])
+  const showToast = (message: string, type: ToastType = "success") => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 4000)
-  }
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  };
 
-  // Filtered List based on Type, Region, and Full-Text Search
+  const validateFrontendUrl = (url: string): boolean => {
+    if (!url || url.trim() === "") return true;
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
   const filteredUnits = useMemo(() => {
-    let list = []
-    if (activeType === 'Region') {
-      list = [...regions]
+    let list: UnitItem[] = [];
+
+    if (activeType === "Region") {
+      list = [...regions];
     } else {
-      list = [...communities]
+      list = [...communities];
       if (selectedRegionFilterId) {
-        list = list.filter((c) => c.regionId === selectedRegionFilterId)
+        list = list.filter((c) => c.regionId === selectedRegionFilterId);
       }
     }
 
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase()
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
       list = list.filter(
         (item) =>
           item.name?.toLowerCase().includes(q) ||
           item.nameFull?.toLowerCase().includes(q) ||
-          item.kattotgId?.toLowerCase().includes(q)
-      )
+          item.kattotgId?.toLowerCase().includes(q),
+      );
     }
 
-    // Filter by website_url fill status
-    if (websiteUrlFilter === 'filled') {
-      list = list.filter((item) => item.websiteUrl && item.websiteUrl.trim() !== '')
-    } else if (websiteUrlFilter === 'empty') {
-      list = list.filter((item) => !item.websiteUrl || item.websiteUrl.trim() === '')
-    }
-    // Filter by strategies_url fill status
-    if (strategiesUrlFilter === 'filled') {
-      list = list.filter((item) => item.strategiesUrl && item.strategiesUrl.trim() !== '')
-    } else if (strategiesUrlFilter === 'empty') {
-      list = list.filter((item) => !item.strategiesUrl || item.strategiesUrl.trim() === '')
+    if (websiteUrlFilter === "filled") {
+      list = list.filter(
+        (item) => item.websiteUrl && item.websiteUrl.trim() !== "",
+      );
+    } else if (websiteUrlFilter === "empty") {
+      list = list.filter(
+        (item) => !item.websiteUrl || item.websiteUrl.trim() === "",
+      );
     }
 
-    // Filter by program availability (strategies list)
-    if (hasStrategiesFilter === 'yes') {
-      list = list.filter((item) => item.strategies && item.strategies.length > 0)
-    } else if (hasStrategiesFilter === 'no') {
-      list = list.filter((item) => !item.strategies || item.strategies.length === 0)
+    if (strategiesUrlFilter === "filled") {
+      list = list.filter(
+        (item) => item.strategiesUrl && item.strategiesUrl.trim() !== "",
+      );
+    } else if (strategiesUrlFilter === "empty") {
+      list = list.filter(
+        (item) => !item.strategiesUrl || item.strategiesUrl.trim() === "",
+      );
     }
 
-    // Sort alphabetically by name
-    list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'uk'))
+    if (hasStrategiesFilter === "yes") {
+      list = list.filter(
+        (item) => item.strategies && item.strategies.length > 0,
+      );
+    } else if (hasStrategiesFilter === "no") {
+      list = list.filter(
+        (item) => !item.strategies || item.strategies.length === 0,
+      );
+    }
 
-    return list
-  }, [activeType, regions, communities, selectedRegionFilterId, searchQuery, websiteUrlFilter, strategiesUrlFilter, hasStrategiesFilter])
+    list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "uk"));
+    return list;
+  }, [
+    activeType,
+    regions,
+    communities,
+    selectedRegionFilterId,
+    searchQuery,
+    websiteUrlFilter,
+    strategiesUrlFilter,
+    hasStrategiesFilter,
+  ]);
 
-  // Reset pagination when filter changes
   useEffect(() => {
-    setCurrentPage(1)
-  }, [activeType, selectedRegionFilterId, searchQuery, websiteUrlFilter, strategiesUrlFilter, hasStrategiesFilter])
+    setCurrentPage(1);
+  }, [
+    activeType,
+    selectedRegionFilterId,
+    searchQuery,
+    websiteUrlFilter,
+    strategiesUrlFilter,
+    hasStrategiesFilter,
+  ]);
 
-  // Paginated List
   const paginatedUnits = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize
-    return filteredUnits.slice(startIndex, startIndex + pageSize)
-  }, [filteredUnits, currentPage])
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredUnits.slice(startIndex, startIndex + pageSize);
+  }, [filteredUnits, currentPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredUnits.length / pageSize))
+  const totalPages = Math.max(1, Math.ceil(filteredUnits.length / pageSize));
 
-  // Select Unit for editing
-  const handleSelectUnit = (unit) => {
-    setSelectedUnit(unit)
-    setStrategiesUrlInput(unit.strategiesUrl || '')
-    setWebsiteUrlInput(unit.websiteUrl || '')
-    setStrategiesUrlError('')
-    setWebsiteUrlError('')
-    setEditingStrategyId(null)
-    setEditStrategyTitle('')
-    setEditStrategyUrl('')
-  }
+  const handleSelectUnit = (unit: UnitItem) => {
+    setSelectedUnit(unit);
+    setStrategiesUrlInput(unit.strategiesUrl || "");
+    setWebsiteUrlInput(unit.websiteUrl || "");
+    setStrategiesUrlError("");
+    setWebsiteUrlError("");
+    setEditingStrategyId(null);
+    setEditStrategyTitle("");
+    setEditStrategyUrl("");
+  };
 
-  // Start editing a strategy
-  const startEditStrategy = (strategy) => {
-    setEditingStrategyId(strategy.id)
-    setEditStrategyTitle(strategy.title || '')
-    setEditStrategyUrl(strategy.strategyUrl || '')
-  }
+  const startEditStrategy = (strategy: Strategy) => {
+    setEditingStrategyId(strategy.id);
+    setEditStrategyTitle(strategy.title || "");
+    setEditStrategyUrl(strategy.strategyUrl || "");
+  };
 
-  // Cancel editing a strategy
   const cancelEditStrategy = () => {
-    setEditingStrategyId(null)
-    setEditStrategyTitle('')
-    setEditStrategyUrl('')
-  }
+    setEditingStrategyId(null);
+    setEditStrategyTitle("");
+    setEditStrategyUrl("");
+  };
 
-  // Delete a strategy
-  const handleStrategyDelete = async (strategyId) => {
-    if (!window.confirm('Ви впевнені, що хочете видалити цю програму?')) return
+  const handleStrategyDelete = async (strategyId: string) => {
+    if (!window.confirm("Ви впевнені, що хочете видалити цю програму?")) return;
+    if (!selectedUnit) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/Strategies/${strategyId}`, {
-        method: 'DELETE',
-      })
+      const response = await fetch(
+        `${API_BASE_URL}/api/Strategies/${strategyId}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) {
-        throw new Error('Не вдалося видалити програму')
+        throw new Error("Не вдалося видалити програму");
       }
 
-      // Update selectedUnit strategies
-      setSelectedUnit((prev) => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          strategies: (prev.strategies || []).filter((s) => s.id !== strategyId),
-        }
-      })
-
-      // Update regions or communities array
-      if (activeType === 'Region') {
-        setRegions((prev) =>
-          prev.map((r) => {
-            if (r.id === selectedUnit.id) {
-              return {
-                ...r,
-                strategies: (r.strategies || []).filter((s) => s.id !== strategyId),
-              }
+      setSelectedUnit((prev) =>
+        prev
+          ? {
+              ...prev,
+              strategies: (prev.strategies || []).filter(
+                (s) => s.id !== strategyId,
+              ),
             }
-            return r
-          })
-        )
+          : prev,
+      );
+
+      if (activeType === "Region") {
+        setRegions((prev) =>
+          prev.map((r) =>
+            r.id === selectedUnit.id
+              ? {
+                  ...r,
+                  strategies: (r.strategies || []).filter(
+                    (s) => s.id !== strategyId,
+                  ),
+                }
+              : r,
+          ),
+        );
       } else {
         setCommunities((prev) =>
-          prev.map((c) => {
-            if (c.id === selectedUnit.id) {
-              return {
-                ...c,
-                strategies: (c.strategies || []).filter((s) => s.id !== strategyId),
-              }
-            }
-            return c
-          })
-        )
+          prev.map((c) =>
+            c.id === selectedUnit.id
+              ? {
+                  ...c,
+                  strategies: (c.strategies || []).filter(
+                    (s) => s.id !== strategyId,
+                  ),
+                }
+              : c,
+          ),
+        );
       }
 
-      showToast('Програму успішно видалено', 'success')
-    } catch (err) {
-      console.error(err)
-      showToast(err.message || 'Помилка при видаленні програми', 'error')
+      showToast("Програму успішно видалено", "success");
+    } catch (err: unknown) {
+      console.error(err);
+      showToast(
+        err instanceof Error ? err.message : "Помилка при видаленні програми",
+        "error",
+      );
     }
-  }
+  };
 
-  // Save updated strategy
-  const handleStrategyUpdate = async (strategyId) => {
+  const handleStrategyUpdate = async (strategyId: string) => {
+    if (!selectedUnit) return;
+
     if (!editStrategyTitle.trim()) {
-      showToast('Назва програми не може бути порожньою', 'error')
-      return
+      showToast("Назва програми не може бути порожньою", "error");
+      return;
     }
 
     if (editStrategyUrl && !validateFrontendUrl(editStrategyUrl)) {
-      showToast('Некоректний формат URL програми', 'error')
-      return
+      showToast("Некоректний формат URL програми", "error");
+      return;
     }
 
-    setSavingStrategyId(strategyId)
+    setSavingStrategyId(strategyId);
     try {
       const payload = {
         id: strategyId,
-        communityId: activeType === 'Community' ? selectedUnit.id : null,
-        regionId: activeType === 'Region' ? selectedUnit.id : null,
+        communityId: activeType === "Community" ? selectedUnit.id : null,
+        regionId: activeType === "Region" ? selectedUnit.id : null,
         title: editStrategyTitle,
         strategyUrl: editStrategyUrl || null,
-      }
+      };
 
-      const response = await fetch(`${API_BASE_URL}/api/Strategies/${strategyId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${API_BASE_URL}/api/Strategies/${strategyId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      })
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.message || 'Не вдалося оновити програму')
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Не вдалося оновити програму");
       }
 
-      const updatedStrategy = await response.json()
+      const updatedStrategy: Strategy = await response.json();
 
-      // Update selectedUnit strategies
-      setSelectedUnit((prev) => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          strategies: (prev.strategies || []).map((s) => (s.id === strategyId ? updatedStrategy : s)),
-        }
-      })
-
-      // Update regions or communities array
-      if (activeType === 'Region') {
-        setRegions((prev) =>
-          prev.map((r) => {
-            if (r.id === selectedUnit.id) {
-              return {
-                ...r,
-                strategies: (r.strategies || []).map((s) => (s.id === strategyId ? updatedStrategy : s)),
-              }
+      setSelectedUnit((prev) =>
+        prev
+          ? {
+              ...prev,
+              strategies: (prev.strategies || []).map((s) =>
+                s.id === strategyId ? updatedStrategy : s,
+              ),
             }
-            return r
-          })
-        )
+          : prev,
+      );
+
+      if (activeType === "Region") {
+        setRegions((prev) =>
+          prev.map((r) =>
+            r.id === selectedUnit.id
+              ? {
+                  ...r,
+                  strategies: (r.strategies || []).map((s) =>
+                    s.id === strategyId ? updatedStrategy : s,
+                  ),
+                }
+              : r,
+          ),
+        );
       } else {
         setCommunities((prev) =>
-          prev.map((c) => {
-            if (c.id === selectedUnit.id) {
-              return {
-                ...c,
-                strategies: (c.strategies || []).map((s) => (s.id === strategyId ? updatedStrategy : s)),
-              }
-            }
-            return c
-          })
-        )
+          prev.map((c) =>
+            c.id === selectedUnit.id
+              ? {
+                  ...c,
+                  strategies: (c.strategies || []).map((s) =>
+                    s.id === strategyId ? updatedStrategy : s,
+                  ),
+                }
+              : c,
+          ),
+        );
       }
 
-      setEditingStrategyId(null)
-      setEditStrategyTitle('')
-      setEditStrategyUrl('')
-      showToast('Програму успішно оновлено', 'success')
-    } catch (err) {
-      console.error(err)
-      showToast(err.message || 'Помилка при оновленні програми', 'error')
+      setEditingStrategyId(null);
+      setEditStrategyTitle("");
+      setEditStrategyUrl("");
+      showToast("Програму успішно оновлено", "success");
+    } catch (err: unknown) {
+      console.error(err);
+      showToast(
+        err instanceof Error ? err.message : "Помилка при оновленні програми",
+        "error",
+      );
     } finally {
-      setSavingStrategyId(null)
+      setSavingStrategyId(null);
     }
-  }
+  };
 
-  // Validate URL format on frontend
-  const validateFrontendUrl = (url) => {
-    if (!url || url.trim() === '') return true
-    try {
-      const parsed = new URL(url)
-      return parsed.protocol === 'http:' || parsed.protocol === 'https:'
-    } catch (e) {
-      return false
-    }
-  }
+  const handleStrategiesUrlChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const val = e.target.value;
+    setStrategiesUrlInput(val);
+    setStrategiesUrlError(
+      val && !validateFrontendUrl(val)
+        ? "Некоректний формат URL. URL має починатися з http:// або https://"
+        : "",
+    );
+  };
 
-  // Handle Strategies URL Input Change
-  const handleStrategiesUrlChange = (e) => {
-    const val = e.target.value
-    setStrategiesUrlInput(val)
-    if (val && !validateFrontendUrl(val)) {
-      setStrategiesUrlError('Некоректний формат URL. URL має починатися з http:// або https://')
-    } else {
-      setStrategiesUrlError('')
-    }
-  }
+  const handleWebsiteUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setWebsiteUrlInput(val);
+    setWebsiteUrlError(
+      val && !validateFrontendUrl(val)
+        ? "Некоректний формат URL. URL має починатися з http:// або https://"
+        : "",
+    );
+  };
 
-  // Handle Website URL Input Change
-  const handleWebsiteUrlChange = (e) => {
-    const val = e.target.value
-    setWebsiteUrlInput(val)
-    if (val && !validateFrontendUrl(val)) {
-      setWebsiteUrlError('Некоректний формат URL. URL має починатися з http:// або https://')
-    } else {
-      setWebsiteUrlError('')
-    }
-  }
-
-  // Revert/Cancel changes
   const handleCancel = () => {
     if (selectedUnit) {
-      setStrategiesUrlInput(selectedUnit.strategiesUrl || '')
-      setWebsiteUrlInput(selectedUnit.websiteUrl || '')
-      setStrategiesUrlError('')
-      setWebsiteUrlError('')
-      showToast('Зміни скасовано', 'info')
+      setStrategiesUrlInput(selectedUnit.strategiesUrl || "");
+      setWebsiteUrlInput(selectedUnit.websiteUrl || "");
+      setStrategiesUrlError("");
+      setWebsiteUrlError("");
+      showToast("Зміни скасовано", "info");
     }
-  }
+  };
 
-  // Save changes
-  const handleSave = async (e) => {
-    e.preventDefault()
-    if (!selectedUnit) return
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedUnit) return;
 
-    // Frontend validation checks
     if (strategiesUrlInput && !validateFrontendUrl(strategiesUrlInput)) {
-      setStrategiesUrlError('Некоректний формат URL. URL має починатися з http:// або https://')
-      showToast('Помилка валідації URL стратегії', 'error')
-      return
+      setStrategiesUrlError(
+        "Некоректний формат URL. URL має починатися з http:// або https://",
+      );
+      showToast("Помилка валідації URL стратегії", "error");
+      return;
     }
     if (websiteUrlInput && !validateFrontendUrl(websiteUrlInput)) {
-      setWebsiteUrlError('Некоректний формат URL. URL має починатися з http:// або https://')
-      showToast('Помилка валідації URL офіційного сайту', 'error')
-      return
+      setWebsiteUrlError(
+        "Некоректний формат URL. URL має починатися з http:// або https://",
+      );
+      showToast("Помилка валідації URL офіційного сайту", "error");
+      return;
     }
 
-    setSaving(true)
+    setSaving(true);
     const endpoint =
-      activeType === 'Region'
+      activeType === "Region"
         ? `${API_BASE_URL}/api/Regions/${selectedUnit.id}`
-        : `${API_BASE_URL}/api/Communities/${selectedUnit.id}`
+        : `${API_BASE_URL}/api/Communities/${selectedUnit.id}`;
 
     try {
       const response = await fetch(endpoint, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           strategiesUrl: strategiesUrlInput || null,
-          websiteUrl: websiteUrlInput || null
+          websiteUrl: websiteUrlInput || null,
         }),
-      })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null)
-        throw new Error(errorData?.message || 'Не вдалося зберегти дані на сервері.')
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || "Не вдалося зберегти дані на сервері.",
+        );
       }
 
-      const responseData = await response.json()
-      const updatedStrategiesUrl = responseData.strategiesUrl
+      const responseData = await response.json();
+      const updatedStrategiesUrl = responseData.strategiesUrl;
+      const updatedWebsiteUrl = responseData.websiteUrl;
+
+      if (activeType === "Region") {
+        setRegions((prev) =>
+          prev.map((r) =>
+            r.id === selectedUnit.id
+              ? {
+                  ...r,
+                  strategiesUrl: updatedStrategiesUrl,
+                  websiteUrl: updatedWebsiteUrl,
+                }
+              : r,
+          ),
+        );
+      } else {
+        setCommunities((prev) =>
+          prev.map((c) =>
+            c.id === selectedUnit.id
+              ? {
+                  ...c,
+                  strategiesUrl: updatedStrategiesUrl,
+                  websiteUrl: updatedWebsiteUrl,
+                }
+              : c,
+          ),
+        );
+      }
+
+      setSelectedUnit((prev) =>
+        prev
+          ? {
+              ...prev,
+              strategiesUrl: updatedStrategiesUrl,
+              websiteUrl: updatedWebsiteUrl,
+            }
+          : prev,
+      );
+      showToast("Дані успішно оновлено!", "success");
+    } catch (err: unknown) {
+      console.error(err);
+      showToast(
+        err instanceof Error
+          ? err.message
+          : "Виникла помилка під час збереження.",
+        "error",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getRegionName = (regionId?: string) => {
+    const r = regions.find((x) => x.id === regionId);
+    return r ? r.nameFull || r.name || "" : "";
+  };
+
+  const getCategoryExplanation = (cat
       const updatedWebsiteUrl = responseData.websiteUrl
 
       // Update local state to keep everything in sync

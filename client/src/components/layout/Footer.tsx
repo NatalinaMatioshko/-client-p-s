@@ -1,7 +1,7 @@
-import { Container } from './Container'
+import { Container } from "./Container";
 
 export function Footer() {
-  const year = new Date().getFullYear()
+  const year = new Date().getFullYear();
 
   return (
     <footer className="site-footer">
@@ -9,5 +9,5 @@ export function Footer() {
         <p>© {year} Є рішення</p>
       </Container>
     </footer>
-  )
+  );
 }

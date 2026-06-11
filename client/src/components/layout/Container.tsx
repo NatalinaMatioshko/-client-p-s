@@ -1,4 +1,4 @@
-import { type ComponentProps } from "react";
+import { type ComponentPropsWithoutRef } from "react";
 
 type ContainerTag =
   | "div"
@@ -8,7 +8,7 @@ type ContainerTag =
   | "header"
   | "footer";
 
-interface ContainerProps extends Omit<ComponentProps<"div">, "as"> {
+interface ContainerProps extends ComponentPropsWithoutRef<"div"> {
   className?: string;
   as?: ContainerTag;
 }

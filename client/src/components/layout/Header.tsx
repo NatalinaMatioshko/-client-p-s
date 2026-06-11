@@ -1,5 +1,5 @@
-import { Link, NavLink } from 'react-router-dom'
-import { Container } from './Container'
+import { Link, NavLink } from "react-router-dom";
+import { Container } from "./Container";
 
 export function Header() {
   return (
@@ -24,5 +24,5 @@ export function Header() {
         </nav>
       </Container>
     </header>
-  )
+  );
 }
