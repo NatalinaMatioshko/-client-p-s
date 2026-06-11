@@ -1,12 +1,45 @@
 import { useState } from 'react'
 import './StrategyGoalsTree.css'
 
+interface ProgramTask {
+  id: string
+  label: string
+  number: number
+  description: string
+}
+
+interface OperationalGoal {
+  id: string
+  label: string
+  number: number
+  title: string
+  programTasks: ProgramTask[]
+}
+
+interface StrategicGoal {
+  id: string
+  label: string
+  number: number
+  title: string
+  operationalGoals: OperationalGoal[]
+}
+
+interface Strategy {
+  strategicGoals: StrategicGoal[]
+}
+
+interface StrategyGoalsTreeProps {
+  strategy: Strategy
+}
+
 const collator = new Intl.Collator('uk', {
   numeric: true,
   sensitivity: 'base',
 })
 
-function sortByNumber(items = []) {
+function sortByNumber<T extends { number?: number; label?: string }>(
+  items: T[]
+): T[] {
   return [...items].sort((a, b) => {
     const numberDiff = (a.number ?? 0) - (b.number ?? 0)
     if (numberDiff !== 0) return numberDiff
@@ -15,14 +48,16 @@ function sortByNumber(items = []) {
   })
 }
 
-export function StrategyGoalsTree({ strategy }) {
+export function StrategyGoalsTree({ strategy }: StrategyGoalsTreeProps) {
   const strategicGoals = sortByNumber(strategy.strategicGoals ?? [])
-  const [collapsedStrategicIds, setCollapsedStrategicIds] = useState(() => new Set())
-  const [collapsedOperationalIds, setCollapsedOperationalIds] = useState(
-    () => new Set(),
+  const [collapsedStrategicIds, setCollapsedStrategicIds] = useState<Set<string>>(
+    () => new Set()
+  )
+  const [collapsedOperationalIds, setCollapsedOperationalIds] = useState<Set<string>>(
+    () => new Set()
   )
 
-  const toggleSetItem = (setter, id) => {
+  const toggleSetItem = <T>(setter: (value: T) => T, id: string) => {
     setter((current) => {
       const next = new Set(current)
       if (next.has(id)) {
@@ -34,7 +69,7 @@ export function StrategyGoalsTree({ strategy }) {
     })
   }
 
-  const expandStrategicGoal = (id) => {
+  const expandStrategicGoal = (id: string) => {
     setCollapsedStrategicIds((current) => {
       const next = new Set(current)
       next.delete(id)
@@ -42,7 +77,7 @@ export function StrategyGoalsTree({ strategy }) {
     })
   }
 
-  const expandOperationalGoal = (strategicGoalId, operationalGoalId) => {
+  const expandOperationalGoal = (strategicGoalId: string, operationalGoalId: string) => {
     expandStrategicGoal(strategicGoalId)
     setCollapsedOperationalIds((current) => {
       const next = new Set(current)

@@ -1,8 +1,18 @@
-import { useState } from 'react'
-import './CollapsibleBlock.css'
+import { useState } from "react";
+import "./CollapsibleBlock.css";
 
-function CollapsibleBlock({ title, children, defaultOpen = false }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
+interface CollapsibleBlockProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+export function CollapsibleBlock({
+  title,
+  children,
+  defaultOpen = false,
+}: CollapsibleBlockProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <section className="collapsible-block">
@@ -14,15 +24,11 @@ function CollapsibleBlock({ title, children, defaultOpen = false }) {
       >
         <span className="collapsible-block__title">{title}</span>
         <span className="collapsible-block__icon" aria-hidden="true">
-          {isOpen ? '−' : '+'}
+          {isOpen ? "−" : "+"}
         </span>
       </button>
 
-      {isOpen && (
-        <div className="collapsible-block__content">{children}</div>
-      )}
+      {isOpen && <div className="collapsible-block__content">{children}</div>}
     </section>
-  )
+  );
 }
-
-export default CollapsibleBlock

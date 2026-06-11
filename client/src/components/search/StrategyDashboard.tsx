@@ -1,10 +1,41 @@
-export function StrategyDashboard({ metrics, directionLabel }) {
+interface DashboardMetrics {
+  budgetTotalMln: number;
+  budgetUsedMln: number;
+  budgetUsedPercent: number;
+  tasksDone: number;
+  tasksInProgress: number;
+  tasksTotal: number;
+  executionPercent: number;
+  periodElapsed: number;
+  periodLabel: string;
+  periodYearsPassed: number | null;
+  periodYearsTotal: number | null;
+  strategicGoals: number;
+  operationalGoals: number;
+  partnersCount: number;
+  directionsCount: number;
+  kpiPercent: number;
+}
+
+interface StrategyDashboardProps {
+  metrics: DashboardMetrics;
+  directionLabel?: string;
+}
+
+export function StrategyDashboard({
+  metrics,
+  directionLabel,
+}: StrategyDashboardProps) {
+  if (!metrics) {
+    return null;
+  }
+
   return (
     <section className="strategy-dashboard" aria-label="Дашборд стратегії">
       <div className="strategy-dashboard__head">
         <div>
           <h2 className="strategy-dashboard__title">
-            Дашборд: {directionLabel ?? 'загальний огляд'}
+            Дашборд: {directionLabel ?? "загальний огляд"}
           </h2>
           <p className="strategy-dashboard__subtitle muted">
             Моніторинг виконання за вимірюваними показниками
@@ -25,9 +56,14 @@ export function StrategyDashboard({ metrics, directionLabel }) {
             {metrics.budgetUsedMln} / {metrics.budgetTotalMln} млн
           </p>
           <div className="metric-card__bar">
-            <div className="metric-card__bar-fill" style={{ width: `${metrics.budgetUsedPercent}%` }} />
+            <div
+              className="metric-card__bar-fill"
+              style={{ width: `${metrics.budgetUsedPercent}%` }}
+            />
           </div>
-          <p className="metric-card__hint">{metrics.budgetUsedPercent}% від плану</p>
+          <p className="metric-card__hint">
+            {metrics.budgetUsedPercent}% від плану
+          </p>
         </article>
 
         <article className="metric-card">
@@ -89,5 +125,5 @@ export function StrategyDashboard({ metrics, directionLabel }) {
         </article>
       </div>
     </section>
-  )
+  );
 }

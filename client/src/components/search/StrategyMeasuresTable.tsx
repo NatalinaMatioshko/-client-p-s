@@ -1,7 +1,21 @@
-import { STATUS_LABELS } from '../../lib/strategyMetrics'
+import { STATUS_LABELS } from "../../lib/strategyMetrics";
 
-export function StrategyMeasuresTable({ rows }) {
-  const preview = rows.slice(0, 12)
+interface MeasureRow {
+  id: string;
+  description: string;
+  label: string;
+  executor?: string;
+  deadline?: string;
+  budgetLabel?: string;
+  status?: "done" | "in_progress" | "planned";
+}
+
+interface StrategyMeasuresTableProps {
+  rows: MeasureRow[];
+}
+
+export function StrategyMeasuresTable({ rows }: StrategyMeasuresTableProps) {
+  const preview = rows.slice(0, 12);
 
   return (
     <section className="measures-table-wrap">
@@ -21,7 +35,9 @@ export function StrategyMeasuresTable({ rows }) {
             {preview.map((row) => (
               <tr key={row.id}>
                 <td>
-                  <span className="measures-table__name">{row.description}</span>
+                  <span className="measures-table__name">
+                    {row.description}
+                  </span>
                   <span className="measures-table__meta">{row.label}</span>
                 </td>
                 <td>{row.executor}</td>
@@ -29,7 +45,7 @@ export function StrategyMeasuresTable({ rows }) {
                 <td>{row.budgetLabel}</td>
                 <td>
                   <span className={`status-pill status-pill--${row.status}`}>
-                    {STATUS_LABELS[row.status]}
+                    {row.status ? STATUS_LABELS[row.status] : ""}
                   </span>
                 </td>
               </tr>
@@ -39,9 +55,10 @@ export function StrategyMeasuresTable({ rows }) {
       </div>
       {rows.length > preview.length && (
         <p className="muted measures-table-wrap__more">
-          Показано {preview.length} з {rows.length} заходів. Решта — у дереві цілей нижче.
+          Показано {preview.length} з {rows.length} заходів. Решта — у дереві
+          цілей нижче.
         </p>
       )}
     </section>
-  )
+  );
 }
